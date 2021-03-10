@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_readline" default="compile.module.readline">
+  <dirname property="module.readline.basedir" file="${ant.file.module_readline}"/>
+  
+  <property name="module.jdk.home.readline" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.readline" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.readline" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.readline" value="-encoding UTF-8 -source 13 -target 8 ${compiler.args}"/>
+  
+  <property name="readline.output.dir" value="${module.readline.basedir}/target/classes"/>
+  <property name="readline.testoutput.dir" value="${module.readline.basedir}/target/test-classes"/>
+  
+  <path id="readline.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="readline.module.production.classpath">
+    <path refid="${module.jdk.classpath.readline}"/>
+  </path>
+  
+  <path id="readline.runtime.production.module.classpath">
+    <pathelement location="${readline.output.dir}"/>
+  </path>
+  
+  <path id="readline.module.classpath">
+    <path refid="${module.jdk.classpath.readline}"/>
+    <pathelement location="${readline.output.dir}"/>
+  </path>
+  
+  <path id="readline.runtime.module.classpath">
+    <pathelement location="${readline.testoutput.dir}"/>
+    <pathelement location="${readline.output.dir}"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.readline">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.readline">
+    <patternset refid="excluded.from.module.readline"/>
+  </patternset>
+  
+  <path id="readline.module.sourcepath">
+    <dirset dir="${module.readline.basedir}">
+      <include name="src/main/java"/>
+      <include name="src/main/resources"/>
+    </dirset>
+  </path>
+  
+  <path id="readline.module.test.sourcepath">
+    <dirset dir="${module.readline.basedir}">
+      <include name="src/test/java"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.readline" depends="compile.module.readline.production,compile.module.readline.tests" description="Compile module ReadLine"/>
+  
+  <target name="compile.module.readline.production" depends="register.custom.compilers" description="Compile module ReadLine; production classes">
+    <mkdir dir="${readline.output.dir}"/>
+    <javac2 destdir="${readline.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.readline}/javac">
+      <compilerarg line="${compiler.args.readline}"/>
+      <bootclasspath refid="readline.module.bootclasspath"/>
+      <classpath refid="readline.module.production.classpath"/>
+      <src refid="readline.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.readline"/>
+    </javac2>
+    
+    <copy todir="${readline.output.dir}">
+      <fileset dir="${module.readline.basedir}/src/main/java">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.readline.basedir}/src/main/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.readline.tests" depends="register.custom.compilers,compile.module.readline.production" description="compile module ReadLine; test classes" unless="skip.tests">
+    <mkdir dir="${readline.testoutput.dir}"/>
+    <javac2 destdir="${readline.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.readline}/javac">
+      <compilerarg line="${compiler.args.readline}"/>
+      <bootclasspath refid="readline.module.bootclasspath"/>
+      <classpath refid="readline.module.classpath"/>
+      <src refid="readline.module.test.sourcepath"/>
+      <patternset refid="excluded.from.compilation.readline"/>
+    </javac2>
+    
+    <copy todir="${readline.testoutput.dir}">
+      <fileset dir="${module.readline.basedir}/src/test/java">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="clean.module.readline" description="cleanup module">
+    <delete dir="${readline.output.dir}"/>
+    <delete dir="${readline.testoutput.dir}"/>
+  </target>
+</project>
