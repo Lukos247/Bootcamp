@@ -8,54 +8,50 @@ import java.io.Reader;
 public class StdBufferedReader implements Closeable {
 
 
-    private char[] charsBuffer;
+  //
     private Reader reader;
-    private static int defaultCharBufferSize = 5000;
-    private int value = 0;
-    private int symbolCount = 0;
-    private boolean isAvailableNextLine = true;
-    private int bz = 100;
-    private int bufferCursor = 0;
-    private int leng;
-    private char[] tempfinal;
+    private int n = 0;
+    private int startNewLine = 0;
+    private boolean isAvailableNextLine = false;
+    private char[] cbuf;
+
+
+   // private static int defaultCharBufferSize = 40;
+
+
+
+  //  private int value = 0;
+  //  private int symbolCount = 0;
+  //
+  //  private int bz = 100;
+  //  private int bufferCursor = 0;
+  //  private int leng;
+  //  private char[] tempfinal;
+
+
+
 
     public StdBufferedReader(Reader reader, int bufferSize) {
 
+
+
+
+        if(reader == null){
+            throw new NullPointerException("Null exception");
+        }
+        if (bufferSize < 0) {
+            throw new IllegalArgumentException("can't be negative");
+        }
+
         this.reader = reader;
+        cbuf = new char[bufferSize];
 
-
-         if(reader == null){
-             throw new NullPointerException("Null exception");
-         }
-         if (bufferSize < 0) {
-             throw new IllegalArgumentException("can't be negative");
-         }
-        try {
-            if(!reader.ready()){
-                isAvailableNextLine = false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-       // bufferSize = defaultCharBufferSize;
-       bufferSize = 500;
-        this.charsBuffer = new char[bufferSize];
-   //     charsBuffer = fillna(charsBuffer);
-/*
-        try {
-          //  leng = reader.read(charsBuffer,0,charsBuffer.length);
-            tempfinal = new char[leng];
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
 
     }
 
     public StdBufferedReader(Reader reader) {
+        this(reader, 100);
 
-            this(reader, defaultCharBufferSize);
 
     }
 
@@ -64,9 +60,50 @@ public class StdBufferedReader implements Closeable {
     // Returns true if there is something to read from the reader.
     // False if nothing is there
     public boolean hasNext() throws IOException {
-        return isAvailableNextLine;
+        return isAvailableNextLine || reader.ready();
 
       //  BufferedReader
+    }
+
+    public char[] readLine() throws IOException {
+        char[] beforeSeparator;
+        char[] tempLine = new char[]{};
+        char[] result = new char[]{};
+
+
+        while (n!=-1){
+            if(!isAvailableNextLine){
+                if(this.hasNext()){
+                    n = reader.read(cbuf,0,cbuf.length);
+                    startNewLine = 0;
+                }
+                else {
+                    result =tempLine;
+                    return  result;
+                }
+            }
+
+            for(int i = startNewLine; i<n;i++){
+                if(cbuf[i] == 10){
+                    isAvailableNextLine = true;
+                    beforeSeparator = new char[i - startNewLine];
+                    System.arraycopy(cbuf, startNewLine, beforeSeparator,0,beforeSeparator.length);
+                    result = (String.valueOf(tempLine) + String.valueOf(beforeSeparator)).toCharArray();
+                    startNewLine=i+1;
+                    return result;
+                }
+
+
+            }
+            isAvailableNextLine = false;
+            beforeSeparator = new char[n - startNewLine];
+            System.arraycopy(cbuf, startNewLine, beforeSeparator,0,beforeSeparator.length);
+            tempLine = (String.valueOf(tempLine) + String.valueOf(beforeSeparator)).toCharArray();
+            result = tempLine;
+        }
+
+        return result;
+
     }
 
 
@@ -89,39 +126,39 @@ public class StdBufferedReader implements Closeable {
  //  }
 
 
-    public char[] readLine() throws IOException {
-        char[] temp = new char[0];
+  // public char[] readLine() throws IOException {
+  //     char[] temp = new char[0];
 
-        while (value != -1) {
-                value = reader.read();
-                if (value != -1 && value != 10) {
-                    if(charsBuffer.length > symbolCount) {
-                        char charValue = (char) value;
-                        charsBuffer[symbolCount] = charValue;
-                    }
+  //     while (value != -1) {
+  //             value = reader.read();
+  //             if (value != -1 && value != 10) {
+  //                 if(charsBuffer.length > symbolCount) {
+  //                     char charValue = (char) value;
+  //                     charsBuffer[symbolCount] = charValue;
+  //                 }
 
-                } else {
-                    temp = charsBuffer;
-                    temp = fillna(temp);
-                    charsBuffer = new char[bz];
-                    if (symbolCount >= bz) {
-                        isAvailableNextLine = false;
-                        break;
-                    }
-                    symbolCount = 0;
-                    break;
-                }
-                bufferCursor++;
-                symbolCount++;
-        }
+  //             } else {
+  //                 temp = charsBuffer;
+  //                 temp = fillna(temp);
+  //                 charsBuffer = new char[bz];
+  //                 if (symbolCount >= bz) {
+  //                     isAvailableNextLine = false;
+  //                     break;
+  //                 }
+  //                 symbolCount = 0;
+  //                 break;
+  //             }
+  //             bufferCursor++;
+  //             symbolCount++;
+  //     }
 
-        if(value == -1){
-            isAvailableNextLine = false;
-        }
+  //     if(value == -1){
+  //         isAvailableNextLine = false;
+  //     }
 
-        return temp;
+  //     return temp;
 
-    }
+  // }
 
 
     // Returns a line (everything till the next line)
@@ -200,19 +237,7 @@ public class StdBufferedReader implements Closeable {
     // close
     public void close() throws IOException {
 
-        defaultCharBufferSize = 0;
-
-        if(reader == null){
-            return;
-        }
-       try {
-          reader.close();
-       }
-       finally {
-           charsBuffer = null;
-           reader = null;
-       }
-
+        reader.close();
 
     }
 }
